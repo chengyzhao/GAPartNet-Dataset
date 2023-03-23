@@ -8,13 +8,16 @@ import pickle
 
 
 # TODO to modify!
-DATASET_PATH = '/data/chengyang/data/partnet'
-SAVE_PATH = '/data/chengyang/data/new_render/partnet'
-NUM_RENDER = 8
+DATASET_PATH = '/data/chengyang/GAPartNet_src'
+SAVE_PATH = '/data/chengyang/GAPartNet_modified_test'
+NUM_RENDER = 32
 
 
 FIXED_HANDLE_STRATEGY = './configs/fixed_handle.json'
-ID_PATH = './configs/new_id_split.txt'
+ID_PATH = './configs/partnet_part1_id_split.txt'
+# ID_PATH = './configs/partnet_part2_id_split.txt'
+RENDERED_DATA_PATH = '/data/chengyang/data/source_data_2/valid'
+# RENDERED_DATA_PATH = '/data/chengyang/data/new_render/partnet'
 
 TARGET_PARTS_FIRST_STAGE = [
     'fixed_handle', 'hinge_handle_null', 'slider_button', 'hinge_door', 'slider_drawer', 'slider_lid', 'hinge_lid',
