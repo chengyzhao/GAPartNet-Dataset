@@ -4,15 +4,18 @@ import xml.etree.ElementTree as ET
 
 
 # map link name to its object category name
-def get_semantic_info(in_path):
+def get_semantic_info(in_path, category):
     semantics_path = os.path.join(in_path, 'semantics_relabel.txt')
     linkName2catName = {}
     with open(semantics_path, 'r') as fd:
         linkName2catName = {}
         for line in fd:
-            linkName2catName[int(line.rstrip().split(' ')[0].split('_')[-1]) +
-                             1] = line.rstrip().split(' ')[-2] + '_' + line.rstrip().split(' ')[-1]
-            linkName2catName[0] = 'base'
+            _id = int(line.rstrip().split(' ')[0].split('_')[-1]) + 1
+            linkName2catName[_id] = line.rstrip().split(' ')[-2] + '_' + line.rstrip().split(' ')[-1]
+            if category != "Bucket" and category != "Suitcase":
+                if linkName2catName[_id] == 'hinge_handle':
+                    linkName2catName[_id] = linkName2catName[_id] + '_ignore'
+        linkName2catName[0] = 'base'
     link_name = [None] * len(linkName2catName.keys())
     for key in linkName2catName.keys():
         link_name[key] = linkName2catName[key]
@@ -155,14 +158,14 @@ def get_urdf_mobility(inpath, verbose=False):
     return urdf_ins
 
 
-def get_fixed_handle_info(inpath):
+def get_fixed_handle_info(inpath, category):
     if not inpath.endswith(".urdf"):
         urdf_name = inpath + "/mobility_relabel.urdf"
     else:
         urdf_name = inpath
         inpath = '/'.join(inpath.split('/')[:-1])
 
-    linkName2catName = get_semantic_info(inpath)
+    linkName2catName = get_semantic_info(inpath, category)
 
     urdf_ins = {}
     tree_urdf = ET.parse(urdf_name)
@@ -448,14 +451,14 @@ def modify_urdf_file_add_remove(inpath, new_links, new_joints, modified_links):
         urdf_lines.insert(-1, '\t<link name="{}">\n'.format(new_link_name))
         for obj_name in new_link_objs:
             urdf_lines.insert(-1, '\t\t<visual name="{}">\n'.format(new_visual_name))
-            urdf_lines.insert(-1, '\t\t\t<origin xyz="0 0 0"/>\n')
+            urdf_lines.insert(-1, '\t\t\t<origin xyz="{}"/>\n'.format(obj_xyz[obj_name]))
             urdf_lines.insert(-1, '\t\t\t<geometry>\n')
             urdf_lines.insert(-1, '\t\t\t\t<mesh filename="{}"/>\n'.format(obj_name))
             urdf_lines.insert(-1, '\t\t\t</geometry>\n')
             urdf_lines.insert(-1, '\t\t</visual>\n')
         for obj_name in new_link_objs:
             urdf_lines.insert(-1, '\t\t<collision>\n')
-            urdf_lines.insert(-1, '\t\t\t<origin xyz="0 0 0"/>\n')
+            urdf_lines.insert(-1, '\t\t\t<origin xyz="{}"/>\n'.format(obj_xyz[obj_name]))
             urdf_lines.insert(-1, '\t\t\t<geometry>\n')
             urdf_lines.insert(-1, '\t\t\t\t<mesh filename="{}"/>\n'.format(obj_name))
             urdf_lines.insert(-1, '\t\t\t</geometry>\n')
@@ -463,7 +466,7 @@ def modify_urdf_file_add_remove(inpath, new_links, new_joints, modified_links):
         urdf_lines.insert(-1, '\t</link>\n')
         
         urdf_lines.insert(-1, '\t<joint name="{}" type="{}">\n'.format(new_joint_name, new_joint_type))
-        urdf_lines.insert(-1, '\t\t<origin rpy="0 0 0" xyz="{}"/>\n'.format(obj_xyz[new_link_objs[0]]))
+        urdf_lines.insert(-1, '\t\t<origin rpy="0 0 0" xyz="0 0 0"/>\n')
         urdf_lines.insert(-1, '\t\t<child link="{}"/>\n'.format(new_joint_child))
         urdf_lines.insert(-1, '\t\t<parent link="{}"/>\n'.format(new_joint_parent))
         urdf_lines.insert(-1, '\t</joint>\n')
@@ -507,9 +510,11 @@ def create_link_annos(instname2catid, instname2newlink, mapping, all_link_names)
             continue
         
         if instname not in instname2newlink.keys():
-            assert '/' not in instname
+            if '/' in instname:
+                continue
             link_name = instname.split(':')[0]
             cat_name = instname.split(':')[1]
+            assert not cat_name.endswith('_null')
             assert mapping[instname2catid[instname] - 1] == cat_name
             annos[link_name]['is_gapart'] = True
             annos[link_name]['category'] = cat_name
@@ -517,8 +522,11 @@ def create_link_annos(instname2catid, instname2newlink, mapping, all_link_names)
             instname2linkname[instname] = link_name
             
         else:
+            assert '/' in instname
             link_name = instname2newlink[instname]
             cat_name = instname.split(':')[-1]
+            assert not cat_name.endswith('_null')
+            assert cat_name == "fixed_handle"
             assert mapping[instname2catid[instname] - 1] == cat_name
             annos[link_name]['is_gapart'] = True
             annos[link_name]['category'] = cat_name
@@ -531,6 +539,53 @@ def create_link_annos(instname2catid, instname2newlink, mapping, all_link_names)
     
     return annos, instname2linkname
 
+
+def fix_hinge_handle_joint_of_link_in_urdf_and_semantics(annotations, urdf_path, semantics_path):
+    target_joints = []
+    target_links = []
+    all_link_names = [x for x in annotations.keys() if annotations[x]['is_gapart']]
+    
+    for link_name in all_link_names:
+        category = annotations[link_name]['category']
+        if category.endswith('fixed_handle'):
+            target_joints.append('joint_{}'.format(link_name.split('_')[-1]))
+            target_links.append(link_name)
+    
+    with open(urdf_path, 'r') as f:
+        urdf_lines = f.readlines()
+    
+    for joint_name in target_joints:
+        link_indexs, visual_indexs, collision_indexs, joint_indexs = create_link_visual_collision_joint_indexs(urdf_lines)
+        start_idx, end_idx = joint_indexs[joint_name]
+        joint_type = urdf_lines[start_idx].split('type="')[1].split('"')[0]
+        urdf_lines[start_idx] = urdf_lines[start_idx].replace(joint_type, 'fixed')
+        removed_idxs = []
+        for idx in range(start_idx, end_idx):
+            if "limit" in urdf_lines[idx]:
+                removed_idxs.append(idx)
+        print("fixed joint {} with {} removed lines".format(joint_name, len(removed_idxs)))
+        urdf_lines = [x for idx, x in enumerate(urdf_lines) if idx not in removed_idxs]
+    
+    os.remove(urdf_path)
+    with open(urdf_path, 'w') as f:
+        f.writelines(urdf_lines)
+    
+    semantics = []
+    with open(semantics_path, 'r') as fd:
+        for line in fd:
+            ls = line.strip().split(' ')
+            if ls[0] in target_links:
+                ls[1] = 'fixed'
+                ls[2] = 'handle'
+            semantics.append(ls)
+    
+    os.remove(semantics_path)
+    with open(semantics_path, 'w') as fd:
+        for line in semantics:
+            fd.write(' '.join(line) + '\n')
+    
+    return urdf_path, semantics_path
+    
 
 if __name__ == '__main__':
     data_path = '/Users/proalec/Desktop/Part Detection/test/test_pose/example_data/'

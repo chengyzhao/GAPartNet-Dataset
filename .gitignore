@@ -6,6 +6,7 @@ log_*.txt
 
 rendered_sample/
 example_data/
+example_rendered/
 sample_render/
 visu/
 

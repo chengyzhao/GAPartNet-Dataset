@@ -98,24 +98,24 @@ def set_all_scene(data_path,
     robot.set_qpos(qpos=qpos)
 
     # TODO: different in server and local (sapien version issue)
-    if light_decay is None:
-        scene.set_ambient_light([0.5, 0.5, 0.5])
-    else:
-        scene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
-    scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
-    scene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
-    scene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
-    scene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
-    
-    # rscene = scene.get_renderer_scene()
     # if light_decay is None:
-    #     rscene.set_ambient_light([0.5, 0.5, 0.5])
+    #     scene.set_ambient_light([0.5, 0.5, 0.5])
     # else:
-    #     rscene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
-    # rscene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
-    # rscene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
-    # rscene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
-    # rscene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
+    #     scene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
+    # scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
+    # scene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
+    # scene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
+    # scene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
+    
+    rscene = scene.get_renderer_scene()
+    if light_decay is None:
+        rscene.set_ambient_light([0.5, 0.5, 0.5])
+    else:
+        rscene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
+    rscene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
+    rscene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
+    rscene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
+    rscene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
 
     camera_mount_actor = scene.create_actor_builder().build_kinematic()
     camera = scene.add_mounted_camera(
@@ -846,7 +846,7 @@ def recover_pose_bbox_to_static_pose(part_bbox_list, urdf_ins, joint_pose_dict, 
     output_part_bbox_list = []
     
     for part_tuple in part_bbox_list:
-        category = target_parts_list[part_tuple[0] - 1]
+        category = target_parts_list[part_tuple[0] - 1] # final category in annotation
         bbox = part_tuple[1][0].copy()
         inst_name = part_tuple[2]
         print('recovering', category, inst_name)
@@ -906,4 +906,101 @@ def recover_pose_bbox_to_static_pose(part_bbox_list, urdf_ins, joint_pose_dict, 
         output_part_bbox_list.append((category, bbox, inst_name))
     
     return output_part_bbox_list
+
+
+def merge_bbox_into_annotation(link_annos, part_bbox_list, name_mapping):
+    for cat_name, bbox, inst_name in part_bbox_list:
+        link_name = name_mapping[inst_name]
+        assert link_annos[link_name]['is_gapart'] == True
+        
+        link_annos[link_name]['bbox'] = bbox.copy()
+        
+        assert link_annos[link_name]['category'] != 'hinge_handle_null'
+        assert cat_name != 'hinge_handle_null'
+        if link_annos[link_name]['category'] == 'fixed_handle':
+            assert cat_name == 'line_fixed_handle' or cat_name == 'round_fixed_handle'
+        elif link_annos[link_name]['category'] == 'hinge_handleline':
+            assert cat_name == 'line_fixed_handle'
+        elif link_annos[link_name]['category'] == 'hinge_handleround':
+            assert cat_name == 'round_fixed_handle'
+        else:
+            assert link_annos[link_name]['category'] == cat_name
+        
+        link_annos[link_name]['category'] = cat_name
+    
+    return link_annos
+
+
+def merge_link_annotation(all_link_annos, curr_link_annos):
+    link_names = list(all_link_annos.keys())
+    
+    for _name in link_names:
+        if all_link_annos[_name]['is_gapart'] == False:
+            assert curr_link_annos[_name]['is_gapart'] == False
+            continue
+        
+        if all_link_annos[_name]['bbox'] is not None:
+            if curr_link_annos[_name]['bbox'] is not None:
+                assert all_link_annos[_name]['category'] == curr_link_annos[_name]['category']
+            # TODO: maybe need to check the bbox here (need to tolerate some error)
+            continue
+        
+        if curr_link_annos[_name]['bbox'] is not None:
+            all_link_annos[_name]['bbox'] = curr_link_annos[_name]['bbox'].copy()
+            all_link_annos[_name]['category'] = curr_link_annos[_name]['category']
+            continue
+        
+    return all_link_annos
+
+
+def check_annotation_all_filled(all_link_annos, target_name_list):
+    link_names = list(all_link_annos.keys())
+    
+    finished = True
+    for _name in link_names:
+        if all_link_annos[_name]['is_gapart'] == False:
+            continue
+        
+        if all_link_annos[_name]['bbox'] is None:
+            finished = False
+            break
+        
+        assert all_link_annos[_name]['category'] in target_name_list
+        assert all_link_annos[_name]['category'] != 'hinge_handle_null'
+    
+    return finished
+
+
+def correct_hinge_knob_orientation(link_annos, urdf_file):
+    # Use heuristic to correct the orientation of hinge knob
+    
+    link_names = list(link_annos.keys())
+    
+    for _name in link_names:
+        if link_annos[_name]['is_gapart'] == False:
+            continue
+        
+        if link_annos[_name]['category'] != 'hinge_knob':
+            continue
+        
+        bbox = link_annos[_name]['bbox']
+        zs = bbox[:4, :] - bbox[4:, :]
+        z_axis = np.mean(zs, axis=0)
+        z_axis = z_axis / np.linalg.norm(z_axis)
+        
+        if abs(z_axis[2]) > 0.1:
+            if z_axis[2] < 0:
+                bbox = bbox[[6, 7, 4, 5, 2, 3, 0, 1], :] # flip the bbox
+        else:
+            center = np.mean(bbox, axis=0)
+            center[2] = 0 # project to the xy plane
+            center = center / np.linalg.norm(center)
+            z_axis[2] = 0 # project to the xy plane
+            z_axis = z_axis / np.linalg.norm(z_axis)
+            if np.dot(center, z_axis) < 0:
+                bbox = bbox[[6, 7, 4, 5, 2, 3, 0, 1], :] # flip the bbox
+        
+        link_annos[_name]['bbox'] = bbox
+        
+    return link_annos
 

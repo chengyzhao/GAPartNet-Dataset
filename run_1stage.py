@@ -14,7 +14,7 @@ if __name__ == "__main__":
 
     total_to_render = len(lines_list)
     cnt = 0
-
+    
     for line in lines_list:
         print(f'Still to run: {total_to_render-cnt}\n')
 
@@ -22,12 +22,20 @@ if __name__ == "__main__":
         id = int(line.rstrip('\n').split(' ')[1])
         
         # TODO: test
-        category = 'StorageFurniture'
-        id = 41083
+        # category = 'StorageFurniture'
+        # id = 41083
         # category = 'CoffeeMachine'
-        # id = 103030
+        # id = 103048
         # category = 'Phone'
         # id = 103941
+        # category = 'Camera'
+        # id = 101352
+        # category = 'Door'
+        # id = 9288
+        # category = 'Safe'
+        # id = 102381
+        # category = 'Oven'
+        # id = 101930
         
         os.system(f'python -u render_annotate.py \
                     --model_id {id} --category {category} --height {HEIGHT} --width {WIDTH} \
@@ -36,6 +44,6 @@ if __name__ == "__main__":
         print(f'Run Over: {category} : {id}\n')
         cnt += 1
         
-        break
-    
-    print("Over!!!")
+        # break
+        
+    print("All Over!!!")
