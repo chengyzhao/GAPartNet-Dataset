@@ -5,13 +5,13 @@ import json
 import shutil
 
 
-dataset_path_part1 = "/Users/proalec/research/GAPartNet/dataset/dataset_v1.0"
-dataset_path_part2 = "/Users/proalec/research/GAPartNet/dataset_v2/new_dataset/partnet"
-dataset_path_before_all = "/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/dataset_all_before"
+dataset_path_part1 = "/data/chengyang/data/chengyang/data/dataset_v1.0"
+dataset_path_part2 = "/data/chengyang/data/chengyang/data/partnet"
+dataset_path_before_all = "/data/chengyang/data/chengyang/partnet_all_src"
 
-split_txt_part1 = "/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/configs/partnet_part1_id_split.txt"
-split_txt_part2 = "/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/configs/partnet_part2_id_split.txt"
-split_txt_before_all = "/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/configs/partnet_all_id_split.txt"
+split_txt_part1 = "/data/chengyang/GAPartNet/GAPartNet-Dataset/configs/partnet_part1_id_split.txt"
+split_txt_part2 = "/data/chengyang/GAPartNet/GAPartNet-Dataset/configs/partnet_part2_id_split.txt"
+split_txt_before_all = "/data/chengyang/GAPartNet/GAPartNet-Dataset/configs/partnet_all_id_split.txt"
 
 if __name__ == "__main__":
     

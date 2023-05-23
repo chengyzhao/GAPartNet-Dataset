@@ -1,0 +1,9 @@
+100058 KitchenPot 背面有button
+23782 Table 背面开门，门上有把手
+针对这两个case，在render的时候随机camera的位置而不从正面历史位置看，这样就可以看到背面的东西了。
+
+7273 Microwave
+10068 Refrigerator
+48051 StorageFurniture
+33116 Table
+由于历史render的时候带了camera_rotate，导致在特殊joint_qpos下不带camera_rotate的时候，物体的位置会超出图片边界，所以需要在annotate的时候同时从metafile读入历史用到的camera_rotate，然后在render的时候也带上这个camera_rotate。

@@ -98,24 +98,24 @@ def set_all_scene(data_path,
     robot.set_qpos(qpos=qpos)
 
     # TODO: different in server and local (sapien version issue)
-    # if light_decay is None:
-    #     scene.set_ambient_light([0.5, 0.5, 0.5])
-    # else:
-    #     scene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
-    # scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
-    # scene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
-    # scene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
-    # scene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
-    
-    rscene = scene.get_renderer_scene()
     if light_decay is None:
-        rscene.set_ambient_light([0.5, 0.5, 0.5])
+        scene.set_ambient_light([0.5, 0.5, 0.5])
     else:
-        rscene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
-    rscene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
-    rscene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
-    rscene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
-    rscene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
+        scene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
+    scene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
+    scene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
+    scene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
+    scene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
+    
+    # rscene = scene.get_renderer_scene()
+    # if light_decay is None:
+    #     rscene.set_ambient_light([0.5, 0.5, 0.5])
+    # else:
+    #     rscene.set_ambient_light([1*light_decay,1*light_decay,1*light_decay])
+    # rscene.add_directional_light([0, 1, -1], [0.5, 0.5, 0.5], shadow=True)
+    # rscene.add_point_light([1, 2, 2], [1, 1, 1], shadow=True)
+    # rscene.add_point_light([1, -2, 2], [1, 1, 1], shadow=True)
+    # rscene.add_point_light([-1, 0, 1], [1, 1, 1], shadow=True)
 
     camera_mount_actor = scene.create_actor_builder().build_kinematic()
     camera = scene.add_mounted_camera(

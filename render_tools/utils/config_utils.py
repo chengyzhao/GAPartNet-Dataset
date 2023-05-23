@@ -8,9 +8,9 @@ import pickle
 
 
 # TODO to modify!
-DATASET_PATH = '/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/example_data'
+DATASET_PATH = '/home/vipuser/gapa/data/partnet_all_annotated_new'
 
-SAVE_PATH = '/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/example_rendered'
+SAVE_PATH = './example_rendered'
 
 VISU_SAVE_PATH = './visu'
 

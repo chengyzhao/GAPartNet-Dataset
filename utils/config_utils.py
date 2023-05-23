@@ -8,14 +8,14 @@ import pickle
 
 
 # TODO to modify!
-DATASET_PATH = '/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/dataset_all_before'
-SAVE_PATH = '/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/GAPartNet-Dataset/example_data'
+DATASET_PATH = '/home/vipuser/gapa/data/partnet_all_src'
+SAVE_PATH = '/home/vipuser/gapa/data/partnet_all_annotated_new'
 NUM_RENDER = 32
 
 
 FIXED_HANDLE_STRATEGY = './configs/fixed_handle.json'
 ID_PATH = './configs/partnet_all_id_split.txt'
-RENDERED_DATA_PATH = '/Users/proalec/research/GAPartNet/dataset_v2/code/Clean/rendered'
+RENDERED_DATA_PATH = '/home/vipuser/gapa/data/partnet_metas'
 
 TARGET_PARTS_FIRST_STAGE = [
     'fixed_handle', 'hinge_handle_null', 'slider_button', 'hinge_door', 'slider_drawer', 'slider_lid', 'hinge_lid',

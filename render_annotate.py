@@ -13,7 +13,7 @@ from utils.render_utils import get_cam_pos,get_light_decay,get_camera_rotate, se
 from utils.urdf_utils import get_semantic_info, get_urdf_mobility, get_fixed_handle_info, remove_fixed_handle_from_urdf, \
     check_urdf_ins_if_missing, create_new_links_joints, modify_urdf_file_add_remove, modify_semantic_info, create_link_annos, fix_hinge_handle_joint_of_link_in_urdf_and_semantics
 from utils.config_utils import CAMERA_ROTATE, get_fixed_handle_configs, get_id_label, save_rgb_image, save_depth_map, save_anno_dict, save_meta, DATASET_PATH, FIXED_HANDLE_STRATEGY, SAVE_PATH, TARGET_PARTS_FIRST_STAGE, TARGET_PARTS_SECOND_STAGE, BACKGROUND_RGB, RERENDER_MAX, RENDERED_DATA_PATH, \
-    load_meta, load_anno_dict, NUM_RENDER, RENDERED_DATA_PATH, CAMERA_POSITION_RANGE, save_link_annos
+    load_meta, load_anno_dict, NUM_RENDER, CAMERA_POSITION_RANGE, save_link_annos
 
 if __name__ == "__main__":
     # 加载配置参数
@@ -80,6 +80,21 @@ if __name__ == "__main__":
             meta_his = meta_history[i_cam][i_render]
             cam_pos_his = np.array(meta_his['camera_position'], dtype=np.float32).reshape(-1)
             joint_qpos_his = np.array(meta_his['joint_qpos'], dtype=np.float32).reshape(-1)
+            camera_rotate = None
+            # to render some corner case where without camera_rotate, the object is not completely in the image
+            # camera_rotate = float(meta_his['camera_rotate'])
+            
+            # use random camera pose to render corner case: gaparts at back
+            # camera_rotate = None
+            # camera_range = CAMERA_POSITION_RANGE[CATEGORY][i_cam]
+            # cam_pos_his = get_cam_pos(theta_min=camera_range['theta_min'],
+            #                   theta_max=camera_range['theta_max'],
+            #                   phi_min=camera_range['phi_min'],
+            #                   phi_max=camera_range['phi_max'],
+            #                   dis_min=camera_range['distance_min'],
+            #                   dis_max=camera_range['distance_max'])
+            # if np.random.rand() < 0.5:
+            #     cam_pos_his[0] = -cam_pos_his[0] # flip x
             
             scene, camera, joint_qpos, metafile_raw, engine = set_all_scene(data_path=anno_data_path,
                                                                     cam_pos=cam_pos_his,
@@ -88,6 +103,7 @@ if __name__ == "__main__":
                                                                     model_id=MODEL_ID,
                                                                     category=CATEGORY,
                                                                     joint_qpos=joint_qpos_his,
+                                                                    camera_rotate=camera_rotate,
                                                                     engine=engine)
             rgb_image = render_rgb_image(camera=camera)
             depth_map = render_depth_map(camera=camera)

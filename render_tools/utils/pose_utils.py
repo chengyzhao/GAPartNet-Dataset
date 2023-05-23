@@ -20,7 +20,7 @@ def query_part_pose_from_joint_qpos(data_path, anno_file, joint_qpos, joints_dic
         if is_gapart and part_class in target_parts:
             target_links[link_name] = {
                 'category_id': target_parts.index(part_class),
-                'bbox': bbox
+                'bbox': np.array(bbox, dtype=np.float32).reshape(-1, 3)
             }
     
     joint_states = {}
